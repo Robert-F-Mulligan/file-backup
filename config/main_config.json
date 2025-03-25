@@ -1,0 +1,10 @@
+{
+    "jobs": [
+      {
+        "job_name": "onedrive photos",
+        "watch_folder": "C:\\Users\\rmull\\OneDrive\\Pictures\\Camera Roll",
+        "destination_folder": "I:\\Rob\\My Pictures",
+        "strategy": "photo"
+      }
+    ]
+  }
