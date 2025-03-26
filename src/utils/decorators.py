@@ -8,7 +8,7 @@ def retry(func: callable) -> callable:
     """Retries a function up to MAX_RETRIES times with exponential backoff."""
     def wrapper(self, *args, **kwargs):
         max_retries = 3
-        backoff_multiplier = 2
+        backoff_multiplier = 5
 
         for attempt in range(max_retries):
             try:

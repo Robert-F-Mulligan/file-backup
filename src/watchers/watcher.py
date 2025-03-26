@@ -26,7 +26,7 @@ class Watcher(FileSystemEventHandler):
         self.destination_folder = destination_folder
         self.file_types = file_types if file_types else []
         self.strategy = strategy
-        self.operation = operation  # Move or Copy
+        self.operation = operation
 
     @retry
     def handle_file(self, event):

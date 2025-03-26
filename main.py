@@ -42,6 +42,7 @@ def main() -> None:
         file_types = job.get("file_types", [])
         job_name = job.get("job_name", "Unnamed Job")
         strategy_name = job.get("strategy", "default")
+        operation = job.get("operation", "copy")
 
         if not watch_folder or not destination_folder:
             logger.warning(f"❌ Missing watch_folder or destination_folder in job '{job_name}'. Skipping.")
@@ -61,7 +62,8 @@ def main() -> None:
         watcher = Watcher(watch_folder, 
                           destination_folder, 
                           file_types, 
-                          strategy_instance)
+                          strategy_instance,
+                          operation=operation)
 
         observer.schedule(watcher, watch_folder, recursive=True)
         observers.append(observer)
