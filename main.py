@@ -1,19 +1,7 @@
-import os
-import shutil
 import time
-import json
 import logging
-from datetime import datetime
-from typing import Optional, Dict, List
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-from PIL import Image
-from PIL.ExifTags import TAGS
 from src.utils.logging_setup import setup_logging
 from src.utils.config_loader import load_config
-from src.utils.decorators import retry
-import src.strategies
-from src.strategies.base_strategy import FileHandlingStrategy
 from src.factories.strategy_factory import StrategyFactory
 from src.watchers.watcher import Watcher
 
@@ -35,7 +23,7 @@ def main() -> None:
         logger.error("❌ No jobs found in config file.")
         return
 
-    observers = []
+    watchers = []
     for job in jobs:
         watch_folder = job.get("watch_folder")
         destination_folder = job.get("destination_folder")
@@ -43,6 +31,7 @@ def main() -> None:
         job_name = job.get("job_name", "Unnamed Job")
         strategy_name = job.get("strategy", "default")
         operation = job.get("operation", "copy")
+        scan_interval = job.get("scan_interval", 60)  # Default to 60s periodic scan
 
         if not watch_folder or not destination_folder:
             logger.warning(f"❌ Missing watch_folder or destination_folder in job '{job_name}'. Skipping.")
@@ -57,25 +46,23 @@ def main() -> None:
 
         logger.info(f"✅ Starting job: {job_name} - Monitoring {watch_folder}...")
 
-        observer = Observer()
         watcher = Watcher(watch_folder=watch_folder, 
                           destination_folder=destination_folder, 
                           file_types=file_types, 
                           strategy=strategy_instance,
-                          operation=operation)
+                          operation=operation,
+                          scan_interval=scan_interval)
 
-        observer.schedule(watcher, watch_folder, recursive=True)
-        observers.append(observer)
-        observer.start()
+        watcher.start_watching()  # Start real-time watching + periodic scanning
+        watchers.append(watcher)
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        for observer in observers:
-            observer.stop()
-        for observer in observers:
-            observer.join()
+        logger.info("🛑 Stopping all watchers...")
+        for watcher in watchers:
+            watcher.stop_watching()
 
 
 if __name__ == "__main__":
