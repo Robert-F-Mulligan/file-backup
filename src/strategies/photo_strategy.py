@@ -26,6 +26,7 @@ class PhotoFileHandlingStrategy(FileHandlingStrategy):
             ".avi": self._extract_video_metadata,
         }
 
+    @retry
     def build_destination_path(self, src_path: str, destination_folder: str) -> Optional[str]:
         """Construct the destination path for the file."""
         try:
@@ -50,6 +51,10 @@ class PhotoFileHandlingStrategy(FileHandlingStrategy):
                 logger.warning(f"❌ No metadata extractor found for file type: {ext} - {src_path}")
                 return None
 
+        except PermissionError:
+            logger.warning(f"❌ Permission error building destination path for {src_path}.")
+            raise
+
         except Exception as e:
             logger.error(f"❌ Error constructing destination path for {src_path}: {e}")
             return None
@@ -62,6 +67,11 @@ class PhotoFileHandlingStrategy(FileHandlingStrategy):
                 exif_data = image._getexif()
                 if exif_data:
                     return self._parse_exif_metadata(exif_data)
+        
+        except PermissionError as e:
+            logger.warning(f"🔄 File {file_path} is locked. Retrying... [{e}]")
+            raise
+        
         except Exception as e:
             logger.warning(f"❌ Error extracting EXIF metadata from {file_path}: {e}")
             return None
@@ -83,6 +93,11 @@ class PhotoFileHandlingStrategy(FileHandlingStrategy):
                 month_name = datetime_obj.strftime("%b")
                 day_number = datetime_obj.strftime("%d")
                 return year, month_num, month_name, day_number
+        
+        except PermissionError as e:
+            logger.warning(f"🔄 File {file_path} is locked. Retrying... [{e}]")
+            raise
+        
         except Exception as e:
             logger.warning(f"❌ Error extracting metadata from video {file_path}: {e}")
             return None

@@ -31,6 +31,7 @@ class Watcher(FileSystemEventHandler):
         self.strategy = strategy
         self.operation = operation
         self.processed_files = set()  # Stores processed file paths to prevent re-processing
+        self.unsupported_files = set()  # Stores unsupported file paths
         self.scan_interval = scan_interval
         self.observer = Observer()
 
@@ -45,7 +46,16 @@ class Watcher(FileSystemEventHandler):
             return
 
         file_path = event.src_path
+
+        # Skip unsupported files if they are already in the unsupported_files set
+        if file_path in self.unsupported_files:
+            logger.info(f"File {file_path} is unsupported, skipping.")
+            return
+
         if self.file_types and not any(file_path.endswith(ext) for ext in self.file_types):
+            # Add unsupported file to the set
+            self.unsupported_files.add(file_path)
+            logger.warning(f"❌ Unsupported file type: {file_path}. Skipping processing.")
             return
 
         logger.info(f"Handling file: {file_path}")
@@ -55,6 +65,8 @@ class Watcher(FileSystemEventHandler):
 
             if not dest_path:
                 logger.warning(f"❌ Invalid destination path for file {file_path}. Skipping processing.")
+                # Add unsupported file to the set
+                self.unsupported_files.add(file_path)
                 return 
 
             if file_path in self.processed_files:
@@ -65,6 +77,11 @@ class Watcher(FileSystemEventHandler):
             self.strategy.execute_operation(self.operation, file_path, dest_path)
             self.processed_files.add(file_path)
 
+        except PermissionError as e:
+            # Specifically handle permission denied errors (OneDrive lock)
+            logger.warning(f"❌ Permission error processing file {file_path}: {e}. Retrying...")
+            raise
+        
         except Exception as e:
             logger.error(f"❌ Error processing file {file_path}: {e}")
             raise
@@ -97,6 +114,9 @@ class Watcher(FileSystemEventHandler):
                 for root, _, files in os.walk(self.watch_folder):
                     for file in files:
                         file_path = os.path.join(root, file)
+                        # Skip unsupported files during the periodic scan
+                        if file_path in self.unsupported_files:
+                            continue
                         if not self.file_types or any(file.endswith(ext) for ext in self.file_types):
                             if file_path not in self.processed_files:
                                 self.handle_file(file_path)  # Now correctly passing a mock event
