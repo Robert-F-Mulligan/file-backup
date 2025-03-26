@@ -10,6 +10,9 @@ class FileHandler:
     @staticmethod
     def execute_operation(operation: str, src: str, dest: str):
         """Execute the file operation (move/copy) dynamically using a dictionary dispatch."""
+        
+        logger.info(f"Attempting to {operation} file from {src} to {dest}")
+
         operations = {
             "move": FileHandler.move_file,
             "copy": FileHandler.copy_file

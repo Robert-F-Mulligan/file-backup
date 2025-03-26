@@ -47,8 +47,7 @@ def main() -> None:
         if not watch_folder or not destination_folder:
             logger.warning(f"❌ Missing watch_folder or destination_folder in job '{job_name}'. Skipping.")
             continue
-
-        # Get the strategy class dynamically
+        
         strategy_instance = StrategyFactory.create(strategy_name)
         logger.info(f"🔧 Using strategy: {strategy_name}")
 
@@ -59,10 +58,10 @@ def main() -> None:
         logger.info(f"✅ Starting job: {job_name} - Monitoring {watch_folder}...")
 
         observer = Observer()
-        watcher = Watcher(watch_folder, 
-                          destination_folder, 
-                          file_types, 
-                          strategy_instance,
+        watcher = Watcher(watch_folder=watch_folder, 
+                          destination_folder=destination_folder, 
+                          file_types=file_types, 
+                          strategy=strategy_instance,
                           operation=operation)
 
         observer.schedule(watcher, watch_folder, recursive=True)

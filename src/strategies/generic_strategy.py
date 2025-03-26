@@ -16,11 +16,9 @@ class GenericFileHandlingStrategy(FileHandlingStrategy):
             filename = os.path.basename(src_path)
             # Use the helper function to preserve the folder structure
             dest_path = build_folder_structure(destination_folder, filename=filename)
-            if dest_path:
-                # Perform the file operation (move or copy)
-                FileHandler.execute_operation(self.operation, src_path, dest_path)
 
             return dest_path
+
         except Exception as e:
             logger.error(f"❌ Error constructing destination path for generic file: {e}")
             raise

@@ -2,7 +2,6 @@ import os
 import logging
 from typing import Optional, List
 from watchdog.events import FileSystemEventHandler
-from ..utils.file_handler import FileHandler
 from ..utils.decorators import retry
 from ..strategies.base_strategy import FileHandlingStrategy
 
@@ -12,7 +11,7 @@ class Watcher(FileSystemEventHandler):
     """Watcher for monitoring file system changes."""
 
     def __init__(self, watch_folder: str, destination_folder: str, file_types: Optional[List[str]] = None, 
-                 strategy: FileHandlingStrategy = None, operation: str = "move"):
+                 strategy: FileHandlingStrategy = None, operation: str = "copy"):
         """
         Initialize the file system watcher.
 
@@ -27,6 +26,7 @@ class Watcher(FileSystemEventHandler):
         self.file_types = file_types if file_types else []
         self.strategy = strategy
         self.operation = operation
+        self.processed_files = set()
 
     @retry
     def handle_file(self, event):
@@ -37,20 +37,23 @@ class Watcher(FileSystemEventHandler):
         # Check if the file type matches the configured list
         if self.file_types and not any(event.src_path.endswith(ext) for ext in self.file_types):
             return
+
+        logger.info(f"Handling file: {event.src_path}") 
         
         try:
-            # Use the strategy to construct the destination path
             dest_path = self.strategy.build_destination_path(event.src_path, self.destination_folder)
+
+            if event.src_path in self.processed_files:
+                logger.info(f"File {event.src_path} has already been processed.")
+                return
             
-            # Ensure the destination folder exists
-            FileHandler.ensure_directory_exists(os.path.dirname(dest_path))
-            
-            # Dynamically select and execute the correct operation
+            logger.debug(f"Applying {self.operation}: {event.src_path} to {dest_path}")
             self.strategy.execute_operation(self.operation, event.src_path, dest_path)
+            self.processed_files.add(event.src_path)
         
         except Exception as e:
             logger.error(f"❌ Error processing file {event.src_path}: {e}")
-            raise  # Rethrow exception so retry can trigger
+            raise
 
     def on_created(self, event):
         """Handle newly created files and apply retry logic."""
