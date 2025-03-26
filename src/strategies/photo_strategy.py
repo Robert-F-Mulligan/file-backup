@@ -31,14 +31,6 @@ class PhotoFileHandlingStrategy(FileHandlingStrategy):
             logger.error(f"❌ Error constructing destination path for {src_path}: {e}")
             raise
 
-    def move_file(self, src: str, dst: str) -> None:
-        """Move a photo file to the destination."""
-        try:
-            shutil.move(src, dst)
-            logger.info(f"✅ Moved photo: {src} ➡ {dst}")
-        except Exception as e:
-            logger.error(f"❌ Error moving photo file: {e}")
-
     def _parse_file_path(self, file_path: str) -> tuple:
         """Parse the file path to extract year, month, and filename from EXIF metadata."""
         try:

@@ -21,11 +21,3 @@ class GenericFileHandlingStrategy(FileHandlingStrategy):
         except Exception as e:
             logger.error(f"❌ Error constructing destination path for generic file: {e}")
             raise
-
-    def move_file(self, src: str, dst: str) -> None:
-        """Move a generic file to the destination."""
-        try:
-            shutil.move(src, dst)
-            logger.info(f"✅ Moved generic file: {src} ➡ {dst}")
-        except Exception as e:
-            logger.error(f"❌ Error moving generic file: {e}")
