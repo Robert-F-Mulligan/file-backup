@@ -35,6 +35,13 @@ class Watcher(FileSystemEventHandler):
         self.scan_interval = scan_interval
         self.observer = Observer()
 
+    def is_drive_connected(self) -> bool:
+        """Check if the destination drive is accessible."""
+        if not os.path.exists(self.destination_folder):
+            logger.warning(f"❌ Destination drive not accessible: {self.destination_folder}")
+            return False
+        return True
+
     @retry
     def handle_file(self, event: FileSystemEvent):
         """Handle file processing with retry logic in case of failures."""
@@ -60,6 +67,10 @@ class Watcher(FileSystemEventHandler):
 
         logger.info(f"Handling file: {file_path}")
 
+        if not self.is_drive_connected():
+            logger.warning("❌ Destination drive is not connected. Skipping file processing.")
+            return
+
         try:
             dest_path = self.strategy.build_destination_path(file_path, self.destination_folder)
 
@@ -81,7 +92,7 @@ class Watcher(FileSystemEventHandler):
             # Specifically handle permission denied errors (OneDrive lock)
             logger.warning(f"❌ Permission error processing file {file_path}: {e}. Retrying...")
             raise
-        
+
         except Exception as e:
             logger.error(f"❌ Error processing file {file_path}: {e}")
             raise
