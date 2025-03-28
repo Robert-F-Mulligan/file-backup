@@ -5,7 +5,7 @@
         "watch_folder": "C:\\Users\\rmull\\OneDrive\\Pictures\\Camera Roll",
         "destination_folder": "I:\\Rob\\My Pictures",
         "strategy": "photo",
-        "operation": "sync",
+        "operation": "move",
         "scan_interval": 3600
       }
     ]
